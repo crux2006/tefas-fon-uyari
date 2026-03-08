@@ -138,6 +138,12 @@ python scripts/sync_latest_report.py
 
 Varsayilan hedef klasor: `Desktop/FonRaporlari`
 
+Windows acilista otomatik indirme task'i:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/register_report_sync_task.ps1
+```
+
 ## Not
 
 Bu sistem yatırım tavsiyesi vermez; veri temelli alarm üretir.
