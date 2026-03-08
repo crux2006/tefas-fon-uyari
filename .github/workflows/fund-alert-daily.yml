@@ -2,7 +2,7 @@ name: FVT Fon Alarm Daily
 
 on:
   schedule:
-    - cron: "30 5 * * *"
+    - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
       send_telegram:

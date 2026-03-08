@@ -121,6 +121,23 @@ Windows Görev Zamanlayıcı ile günlük çalıştırma önerisi:
 - Argüman: `run_pipeline.py`
 - Çalışma dizini: proje kök klasörü
 
+## GitHub Cloud Calisma (PC Kapaliyken)
+
+- Workflow: `.github/workflows/fund-alert-daily.yml`
+- Gunluk otomatik saat: `11:00` (Istanbul), cron: `0 8 * * *`
+- Manuel tetikleme: GitHub > `Actions` > `FVT Fon Alarm Daily` > `Run workflow`
+- Pages yayininda son rapor:
+  - `https://crux2006.github.io/tefas-fon-uyari/`
+  - `interactive_report.html` buradan acilir.
+
+Yerel bilgisayara rapor indirme:
+
+```bash
+python scripts/sync_latest_report.py
+```
+
+Varsayilan hedef klasor: `Desktop/FonRaporlari`
+
 ## Not
 
 Bu sistem yatırım tavsiyesi vermez; veri temelli alarm üretir.

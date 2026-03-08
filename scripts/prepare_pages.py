@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 from pathlib import Path
 
@@ -87,7 +88,17 @@ def main() -> None:
     latest_target = site_dir / "latest"
     shutil.copytree(latest, latest_target)
 
+    files = []
+    for p in latest_target.rglob("*"):
+        if p.is_file():
+            files.append(str(p.relative_to(latest_target)).replace("\\", "/"))
+    files.sort()
+
     (site_dir / "latest_report.txt").write_text(latest.name, encoding="utf-8")
+    (site_dir / "manifest.json").write_text(
+        json.dumps({"latest_report": latest.name, "files": files}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     (site_dir / "index.html").write_text(build_index_html(latest.name), encoding="utf-8")
     print(f"Hazirlandi: {site_dir}")
     print(f"Kaynak rapor: {latest}")

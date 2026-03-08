@@ -16,7 +16,7 @@ Repo > `Settings` > `Secrets and variables` > `Actions` > `New repository secret
 
 ### 1.3 Pipeline
 - Workflow dosyasi: `.github/workflows/fund-alert-daily.yml`
-- Otomatik calisma: her gun `05:30 UTC` (Istanbul saati ile `08:30`, yaz/kis saatine gore degisebilir)
+- Otomatik calisma: her gun `08:00 UTC` (Istanbul saati ile `11:00`)
 - Manuel calisma: `Actions` sekmesinden `Run workflow`
   - `send_telegram`: true/false
   - `portfolio_total_tl`: opsiyonel
@@ -30,7 +30,13 @@ Repo > `Settings` > `Secrets and variables` > `Actions` > `New repository secret
 ### 1.5 Neler yayinlanir
 - Son calisan rapor `site/latest/` altina kopyalanir.
 - `site/index.html` son rapora link verir.
+- `site/manifest.json` son rapordaki dosya listesini verir (yerel sync icin).
 - `reports`, `data/fund_alerts.sqlite`, `site` workflow artifact olarak saklanir.
+
+### 1.6 Bilgisayara otomatik indirme
+- Script: `python scripts/sync_latest_report.py`
+- Varsayilan klasor: `Desktop/FonRaporlari`
+- Istersen Windows Task Scheduler ile "logon" aninda calistirabilirsin.
 
 ## 2) Oracle Yolu (Fallback)
 
@@ -43,4 +49,3 @@ GitHub istenen sekilde stabil olmazsa:
 - `portfolio_api.py` systemd service olarak acilir
 
 Bu adimlar istenirse ayrica `oracle_setup.sh` ve `systemd` unit dosyalariyla otomatiklestirilebilir.
-
