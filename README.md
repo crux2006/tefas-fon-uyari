@@ -141,11 +141,12 @@ python scripts/sync_latest_report.py
 ```
 
 Varsayilan hedef klasor: `Desktop/FonRaporlari`
+Her rapor `Desktop/FonRaporlari/YYYYMMDD_HHMMSS/` altina kaydedilir.
 
 Windows acilista otomatik indirme task'i:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/register_report_sync_task.ps1
+powershell -ExecutionPolicy Bypass -File scripts/install_startup_sync.ps1
 ```
 
 ## Not

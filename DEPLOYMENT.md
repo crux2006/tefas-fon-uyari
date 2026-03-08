@@ -36,9 +36,9 @@ Repo > `Settings` > `Secrets and variables` > `Actions` > `New repository secret
 ### 1.6 Bilgisayara otomatik indirme
 - Script: `python scripts/sync_latest_report.py`
 - Varsayilan klasor: `Desktop/FonRaporlari`
-- Istersen Windows Task Scheduler ile "logon" aninda calistirabilirsin.
-- Tek komutla task olusturma:
-  - `powershell -ExecutionPolicy Bypass -File scripts/register_report_sync_task.ps1`
+- Her rapor `Desktop/FonRaporlari/YYYYMMDD_HHMMSS/` klasorune iner.
+- Acilista otomatik calisma (startup):
+  - `powershell -ExecutionPolicy Bypass -File scripts/install_startup_sync.ps1`
 
 ## 2) Oracle Yolu (Fallback)
 
