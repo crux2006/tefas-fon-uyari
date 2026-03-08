@@ -159,6 +159,7 @@ Olusan `Fon Workflow Tetikle.cmd` dosyasina cift tiklayinca:
 - Portfoy toplam/dagilim bilgisi sorulur (istersen bos birakirsin),
 - GitHub workflow tetiklenir,
 - Run sayfasi ve interaktif rapor sayfasi otomatik acilir.
+- Son girilen degerler yerelde hatirlanir; bir sonraki calistirmada Enter ile ayni degerle devam edebilirsin.
 
 ## Not
 
