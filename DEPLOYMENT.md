@@ -40,6 +40,14 @@ Repo > `Settings` > `Secrets and variables` > `Actions` > `New repository secret
 - Acilista otomatik calisma (startup):
   - `powershell -ExecutionPolicy Bypass -File scripts/install_startup_sync.ps1`
 
+### 1.7 Tek tik manuel tetikleme (Masaustu)
+- Kurulum:
+  - `powershell -ExecutionPolicy Bypass -File scripts/install_desktop_workflow_shortcuts.ps1`
+- Masaustunde olusan `Fon Workflow Tetikle.cmd`:
+  - workflow_dispatch tetikler,
+  - opsiyonel portfoy toplam/dagilim girisi alir,
+  - run ve pages linklerini otomatik acar.
+
 ## 2) Oracle Yolu (Fallback)
 
 GitHub istenen sekilde stabil olmazsa:

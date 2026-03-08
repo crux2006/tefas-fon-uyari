@@ -149,6 +149,17 @@ Windows acilista otomatik indirme task'i:
 powershell -ExecutionPolicy Bypass -File scripts/install_startup_sync.ps1
 ```
 
+Tek tik workflow tetikleme (masaustu kisayolu):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install_desktop_workflow_shortcuts.ps1
+```
+
+Olusan `Fon Workflow Tetikle.cmd` dosyasina cift tiklayinca:
+- Portfoy toplam/dagilim bilgisi sorulur (istersen bos birakirsin),
+- GitHub workflow tetiklenir,
+- Run sayfasi ve interaktif rapor sayfasi otomatik acilir.
+
 ## Not
 
 Bu sistem yatırım tavsiyesi vermez; veri temelli alarm üretir.
