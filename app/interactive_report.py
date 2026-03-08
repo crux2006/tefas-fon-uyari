@@ -344,13 +344,13 @@ def generate_interactive_report(
         <div class="portfolio-grid">
           <div>
             <div class="portfolio-actions">
-              <input id="pfTotalTl" type="text" readonly title="Toplam portföy TL sabittir. Gerekirse manage_portfolio.py set-total ile değiştir.">
+              <input id="pfTotalTl" type="text" placeholder="Toplam Portföy TL (örn 1.600.000)">
               <input id="pfCode" list="fundCodes" placeholder="Fon Kodu (örn TLY)">
               <input id="pfWeight" type="number" step="0.01" placeholder="Ağırlık %">
               <button id="pfAddBtn">Ekle/Güncelle</button>
               <button id="pfSaveBtn">Ağırlıkları Kaydet</button>
             </div>
-            <div class="legend-note">Toplam portföy TL sabittir; burada sadece fon kodu ve ağırlık güncellenir.</div>
+            <div id="pfModeInfo" class="legend-note">Toplam portföy TL ve ağırlıkları buradan güncelleyebilirsin.</div>
             <datalist id="fundCodes"></datalist>
             <div id="portfolioHoldings"></div>
             <div id="portfolioAnalysis"></div>
@@ -396,6 +396,26 @@ def generate_interactive_report(
     const fundMetrics = PAYLOAD.fund_metrics || {{}};
     const suggestions = PAYLOAD.portfolio_suggestions || [];
     const API_BASE = 'http://127.0.0.1:8765';
+    let hasApi = false;
+
+    function parseTlInput(v) {{
+      if (v === null || v === undefined) return 0;
+      const s = String(v).trim();
+      if (!s) return 0;
+      const normalized = s.replace(/\\./g, '').replace(/,/g, '.').replace(/[^0-9.-]/g, '');
+      const n = Number(normalized);
+      return Number.isFinite(n) ? n : 0;
+    }}
+
+    function setPortfolioModeInfo() {{
+      const el = document.getElementById('pfModeInfo');
+      if (!el) return;
+      if (hasApi) {{
+        el.textContent = 'DB servisi aktif: Kaydet ile ana veritabanına yazılır.';
+      }} else {{
+        el.textContent = 'Bulut/Pages modunda DB yok: Kaydet ile tarayıcıda saklanır (bu cihazda).';
+      }}
+    }}
 
     function loadPortfolioStateLocal() {{
       const raw = localStorage.getItem('fvt_portfolio_state_v2');
@@ -416,6 +436,7 @@ def generate_interactive_report(
       try {{
         const res = await fetch(`${{API_BASE}}/portfolio`, {{method:'GET'}});
         if (res.ok) {{
+          hasApi = true;
           const j = await res.json();
           if (j && j.ok && j.portfolio) {{
             const st = {{
@@ -443,8 +464,10 @@ def generate_interactive_report(
           body: JSON.stringify(payload)
         }});
         ok = res.ok;
+        hasApi = res.ok;
       }} catch(e) {{
         ok = false;
+        hasApi = false;
       }}
       savePortfolioStateLocal(payload);
       return ok;
@@ -599,8 +622,13 @@ def generate_interactive_report(
     }}
 
     function renderPortfolio() {{
-      document.getElementById('pfTotalTl').value = `${{fmt(pfState.total_tl || 0, 2)}} TL`;
+      document.getElementById('pfTotalTl').value = fmt(pfState.total_tl || 0, 2);
+      setPortfolioModeInfo();
       const rows = getPortfolioRows();
+      savePortfolioStateLocal({{
+        total_tl: Number(pfState.total_tl || 0),
+        holdings: normalizeHoldings(pfState.holdings || [])
+      }});
 
       let hhtml = '<div class="table-wrap"><table class="tbl"><thead><tr><th>Kod</th><th>Ağırlık%</th><th>Pay%</th><th>Tutar (TL)</th><th>Güncelle</th><th>Sil</th></tr></thead><tbody>';
       rows.forEach((r,idx)=>{{
@@ -640,7 +668,7 @@ def generate_interactive_report(
       const codes = new Set((normalizeHoldings(pfState.holdings || [])).map(x=>String(x.kod).toUpperCase()));
       const list = all.filter(s => codes.has(String(s.name).toUpperCase()));
       if (!list.length) {{
-        Plotly.newPlot('portfolioComparePlot', [], {{annotations:[{{text:'Seçili portföy fonları için seri yok',showarrow:false}}], xaxis:{{visible:false}}, yaxis:{{visible:false}}}}, {{responsive:true, locale:'tr'}});
+        Plotly.newPlot('portfolioComparePlot', [], {{annotations:[{{text:'Seçili fonlar bu raporun karşılaştırma setinde yok. Workflow’u portföy girdisi ile manuel tetikleyebilirsin.',showarrow:false}}], xaxis:{{visible:false}}, yaxis:{{visible:false}}}}, {{responsive:true, locale:'tr'}});
         return;
       }}
 
@@ -713,12 +741,17 @@ def generate_interactive_report(
     }};
 
     document.getElementById('pfSaveBtn').onclick = async () => {{
-      pfState.total_tl = Number(PAYLOAD.portfolio_default?.total_tl || pfState.total_tl || 0);
+      pfState.total_tl = parseTlInput(document.getElementById('pfTotalTl').value);
       pfState.holdings = normalizeHoldings(pfState.holdings || []);
       const ok = await savePortfolioState(pfState);
       alert(ok ? 'Portföy ana veritabanına kaydedildi.' : 'DB servisine ulaşılamadı. Geçici olarak tarayıcıda tutuldu.');
       renderPortfolio();
     }};
+
+    document.getElementById('pfTotalTl').addEventListener('change', () => {{
+      pfState.total_tl = parseTlInput(document.getElementById('pfTotalTl').value);
+      renderPortfolio();
+    }});
 
     rangeSelect.onchange = () => {{ drawCompare(rangeSelect.value); drawPortfolioCompare(rangeSelect.value); }};
     document.getElementById('desktopBtn').onclick = () => document.body.classList.remove('mobile');

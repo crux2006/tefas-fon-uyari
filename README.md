@@ -126,9 +126,13 @@ Windows Görev Zamanlayıcı ile günlük çalıştırma önerisi:
 - Workflow: `.github/workflows/fund-alert-daily.yml`
 - Gunluk otomatik saat: `11:00` (Istanbul), cron: `0 8 * * *`
 - Manuel tetikleme: GitHub > `Actions` > `FVT Fon Alarm Daily` > `Run workflow`
+- Manuel tetiklemede opsiyonel portföy girişi:
+  - `portfolio_total_tl` (ornek `1600000`)
+  - `portfolio_holdings` (ornek `TLY:40,PBR:35,TKZ:25`)
 - Pages yayininda son rapor:
   - `https://crux2006.github.io/tefas-fon-uyari/`
   - `interactive_report.html` buradan acilir.
+  - Not: Pages tarafinda canli DB servisi yoktur; portfoy degisiklikleri bu cihazda tarayiciya kaydolur.
 
 Yerel bilgisayara rapor indirme:
 
