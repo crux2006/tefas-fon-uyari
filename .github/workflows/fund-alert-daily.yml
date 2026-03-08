@@ -1,0 +1,110 @@
+name: FVT Fon Alarm Daily
+
+on:
+  schedule:
+    - cron: "30 5 * * *"
+  workflow_dispatch:
+    inputs:
+      send_telegram:
+        description: "Telegram gonderilsin mi?"
+        required: true
+        default: true
+        type: boolean
+      portfolio_total_tl:
+        description: "Opsiyonel: Portfoy toplam TL (ornek: 1600000)"
+        required: false
+        type: string
+      portfolio_holdings:
+        description: "Opsiyonel: Portfoy dagilimi (ornek: TLY:40,PBR:35,TKZ:25)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  run-and-publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Ensure data/reports folders
+        run: |
+          mkdir -p data
+          mkdir -p reports
+
+      - name: Restore SQLite cache
+        uses: actions/cache@v4
+        with:
+          path: data/fund_alerts.sqlite
+          key: fund-alert-db-v1-${{ github.run_id }}
+          restore-keys: |
+            fund-alert-db-v1-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Optional portfolio replace from manual input
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.portfolio_total_tl != '' && inputs.portfolio_holdings != '' }}
+        run: |
+          python manage_portfolio.py replace "${{ inputs.portfolio_total_tl }}" --holdings "${{ inputs.portfolio_holdings }}"
+
+      - name: Run pipeline
+        env:
+          MPLBACKEND: Agg
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SEND_TELEGRAM: "true"
+        run: |
+          SHOULD_SEND="true"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SHOULD_SEND="${{ inputs.send_telegram }}"
+          fi
+
+          if [ "$SHOULD_SEND" != "true" ] || [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Telegram kapali modda calisiyor."
+            python run_pipeline.py --no-telegram
+          else
+            echo "Telegram acik modda calisiyor."
+            python run_pipeline.py
+          fi
+
+      - name: Prepare GitHub Pages content
+        run: |
+          python scripts/prepare_pages.py --reports-dir reports --site-dir site
+
+      - name: Upload run artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fund-alert-output-${{ github.run_number }}
+          path: |
+            reports
+            data/fund_alerts.sqlite
+            site
+          retention-days: 14
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
