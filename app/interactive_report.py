@@ -296,7 +296,7 @@ def generate_interactive_report(
     .portfolio-card {{ grid-column:1/-1; }}
     .card h3 {{ margin:0 0 8px 0; font-size:18px; }}
     .plot {{ width:100%; min-height:360px; }}
-    #comparePlot {{ min-height:520px; }}
+    #comparePlot {{ min-height:575px; }}
     #portfolioComparePlot {{ min-height:460px; }}
     .muted {{ color:#5d6d83; font-size:12px; }}
     .legend-note {{ margin-top:8px; font-size:12px; color:#5d6d83; background:#eef5ff; border:1px solid #dce7f6; border-radius:10px; padding:8px; overflow-wrap:anywhere; }}
@@ -321,7 +321,7 @@ def generate_interactive_report(
     body.mobile .grid {{ grid-template-columns:1fr; }}
     body.mobile .portfolio-grid {{ grid-template-columns:1fr; }}
     body.mobile .plot {{ min-height:320px; }}
-    body.mobile #comparePlot {{ min-height:420px; }}
+    body.mobile #comparePlot {{ min-height:462px; }}
     body.mobile .cards {{ display:grid; }}
     body.mobile .table-wrap {{ display:none; }}
 
@@ -329,7 +329,7 @@ def generate_interactive_report(
       .grid {{ grid-template-columns:1fr; }}
       .portfolio-grid {{ grid-template-columns:1fr; }}
       .plot {{ min-height:320px; }}
-      #comparePlot {{ min-height:420px; }}
+      #comparePlot {{ min-height:462px; }}
       .cards {{ display:grid; }}
       .table-wrap {{ display:none; }}
     }}
@@ -549,11 +549,13 @@ def generate_interactive_report(
           }});
         }}
       }});
+      const compareHeight = document.body.classList.contains('mobile') ? 462 : 575;
       Plotly.newPlot('comparePlot', traces, {{
-        margin:{{l:52,r:12,t:14,b:56}}, paper_bgcolor:'transparent', plot_bgcolor:'transparent',
+        height: compareHeight,
+        margin:{{l:52,r:12,t:14,b:72}}, paper_bgcolor:'transparent', plot_bgcolor:'transparent',
         xaxis:{{title:'Tarih', tickformat:'%d.%m.%Y', hoverformat:'%d %B %Y'}},
         yaxis:{{title:'Normalize Değer (Başlangıç=100)'}},
-        legend:{{orientation:'h', y:-0.24}}, hovermode:'x unified'
+        legend:{{orientation:'h', y:-0.30}}, hovermode:'x unified'
       }}, {{responsive:true, locale:'tr'}});
     }}
 
