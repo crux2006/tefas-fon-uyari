@@ -120,11 +120,14 @@ def analyze_portfolio(
 
     portfolio_df = pd.DataFrame(rows).sort_values("health_score", ascending=False).reset_index(drop=True)
 
-    owned_codes = set(portfolio_df["kod"].astype(str).tolist())
+    owned_codes = {str(x).strip().upper() for x in portfolio_df["kod"].astype(str).tolist()}
     if daily_signals is None or daily_signals.empty:
         suggestions_df = pd.DataFrame()
     else:
-        suggestions_df = daily_signals[~daily_signals["kod"].isin(owned_codes)].copy()
+        sig = daily_signals.copy()
+        sig["kod_norm"] = sig["kod"].astype(str).str.strip().str.upper()
+        sig = sig[sig["kod_norm"] != ""].drop_duplicates(subset=["kod_norm"], keep="first")
+        suggestions_df = sig[~sig["kod_norm"].isin(owned_codes)].copy()
         if not suggestions_df.empty:
             keep_cols = [
                 "kod",
@@ -152,4 +155,3 @@ def analyze_portfolio(
     }
 
     return PortfolioAnalysisResult(portfolio_df=portfolio_df, suggestions_df=suggestions_df, summary=summary)
-

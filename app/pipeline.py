@@ -119,6 +119,38 @@ class FundAlertPipeline:
 
             sig["reasons"] = sig.apply(enrich_reason, axis=1)
 
+    def _apply_trend_quality_filter(self, per_period_signals: Dict[str, pd.DataFrame]) -> None:
+        if not self.settings.enable_trend_quality_filter:
+            return
+
+        ret_col_by_period = {
+            "gunluk": "getiri_gunluk_pct",
+            "haftalik": "getiri_haftalik_pct",
+            "aylik": "getiri_aylik_pct",
+        }
+
+        for period, sig in list(per_period_signals.items()):
+            if sig is None or sig.empty:
+                continue
+
+            ret_col = ret_col_by_period.get(period, "getiri_gunluk_pct")
+            working = sig.copy()
+            for col in [ret_col, "return_5d_avg_pct", "return_gap_pct", "signal_score"]:
+                working[col] = pd.to_numeric(working[col], errors="coerce").fillna(0.0)
+
+            weak_trend = (
+                (working[ret_col] <= 0.0)
+                & (working["return_5d_avg_pct"] <= 0.0)
+                & (working["return_gap_pct"] <= 0.0)
+                & (working["signal_score"] < float(self.settings.trend_quality_override_score))
+            )
+            filtered = working.loc[~weak_trend].copy()
+            filtered = filtered.sort_values(
+                ["signal_score", "interest_score", "acceleration"],
+                ascending=[False, False, False],
+            ).head(self.settings.top_n_alerts)
+            per_period_signals[period] = filtered.reset_index(drop=True)
+
     def run(self, send_telegram_override: bool | None = None) -> PipelineResult:
         run_time = datetime.now()
         report_dir = self.settings.reports_dir / run_time.strftime("%Y%m%d_%H%M%S")
@@ -178,12 +210,13 @@ class FundAlertPipeline:
                 min_signal_score=self.settings.min_signal_score,
                 min_interest_score=self.settings.min_interest_score,
                 min_acceleration=self.settings.min_acceleration,
-                top_n=self.settings.top_n_alerts,
+                top_n=max(self.settings.top_n_alerts * 3, self.settings.top_n_alerts),
             )
             per_period_signals[period] = signal_df
 
         self._enrich_signals_with_period_returns(per_period_signals, per_period_snapshot)
         self._enrich_signals_with_price_stats(per_period_signals)
+        self._apply_trend_quality_filter(per_period_signals)
 
         for period, sig in per_period_signals.items():
             snap = snapshot_dates.get(period)

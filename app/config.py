@@ -54,6 +54,8 @@ class Settings:
     chart_compare_ranges: List[str]
     chart_compare_metric: str
     excluded_categories: List[str]
+    enable_trend_quality_filter: bool
+    trend_quality_override_score: float
 
 
 def load_settings() -> Settings:
@@ -93,4 +95,6 @@ def load_settings() -> Settings:
         chart_compare_ranges=compare_ranges,
         chart_compare_metric=os.getenv("CHART_COMPARE_METRIC", "fiyat").strip(),
         excluded_categories=excluded_categories,
+        enable_trend_quality_filter=_to_bool(os.getenv("ENABLE_TREND_QUALITY_FILTER"), True),
+        trend_quality_override_score=_to_float(os.getenv("TREND_QUALITY_OVERRIDE_SCORE"), 2.0),
     )
