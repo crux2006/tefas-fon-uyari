@@ -7,6 +7,7 @@ from typing import Dict, Iterable, List
 
 import pandas as pd
 
+from app.benchmarks import YahooBenchmarkClient
 from app.enrichment import analyze_price_series
 from app.fvt_client import FvtClient
 from app.scoring import z_band_label, z_to_100
@@ -97,6 +98,7 @@ def _fetch_compare_series(
     ranges: Iterable[str],
 ) -> Dict[str, List[dict]]:
     out: Dict[str, List[dict]] = {}
+    benchmark_client = YahooBenchmarkClient(timeout=20)
     for r in ranges:
         out[r] = []
         for code in codes:
@@ -135,6 +137,7 @@ def _fetch_compare_series(
             out[r].append(
                 {
                     "name": code,
+                    "is_benchmark": False,
                     "x": [x.strftime("%Y-%m-%d") for x in d["x"]],
                     "y": [round(v, 6) for v in d["norm"]],
                     "raw": [round(v, 6) for v in d["y"]],
@@ -144,6 +147,30 @@ def _fetch_compare_series(
                     "accel_x": accel_x,
                     "accel_y": accel_y,
                     "accel_z": accel_z,
+                }
+            )
+
+        benchmarks = benchmark_client.fetch_all_norm(range_value=r)
+        for name, bdf in benchmarks.items():
+            if bdf is None or bdf.empty:
+                continue
+            d = bdf.copy().sort_values("x")
+            d["ret_1d"] = pd.to_numeric(d["y"], errors="coerce").pct_change() * 100.0
+            d["ret_5avg"] = d["ret_1d"].rolling(5, min_periods=1).mean()
+            d["ret_21avg"] = d["ret_1d"].rolling(21, min_periods=1).mean()
+            out[r].append(
+                {
+                    "name": name,
+                    "is_benchmark": True,
+                    "x": [x.strftime("%Y-%m-%d") for x in d["x"]],
+                    "y": [round(v, 6) for v in d["norm"]],
+                    "raw": [round(v, 6) for v in d["y"]],
+                    "ret_1d": [None if pd.isna(v) else round(float(v), 6) for v in d["ret_1d"]],
+                    "ret_5avg": [None if pd.isna(v) else round(float(v), 6) for v in d["ret_5avg"]],
+                    "ret_21avg": [None if pd.isna(v) else round(float(v), 6) for v in d["ret_21avg"]],
+                    "accel_x": None,
+                    "accel_y": None,
+                    "accel_z": None,
                 }
             )
     return out
@@ -324,7 +351,7 @@ def generate_interactive_report(
       <div class="card compare-card">
         <h3>Karşılaştırmalı Fon Grafiği <span class="muted">(Başlangıç=100)</span></h3>
         <div id="comparePlot" class="plot"></div>
-        <div class="legend-note">Mouse üzerine gelince: Günlük getiri, 5 günlük ortalama getiri ve 1 aylık (21g) ortalama getiri görünür. Yıldız işareti ani ivme noktasını gösterir.</div>
+        <div class="legend-note">Mouse üzerine gelince: Günlük getiri, 5 günlük ortalama getiri ve 1 aylık (21g) ortalama getiri görünür. Yıldız işareti ani ivme noktasını gösterir. Kesik çizgi seriler: BIST 100 ve Gram Altın benchmarkları.</div>
       </div>
 
       <div class="card">
@@ -502,9 +529,10 @@ def generate_interactive_report(
       const traces = [];
       list.forEach(s => {{
         const custom = (s.y || []).map((_,i)=>[s.ret_1d?.[i], s.ret_5avg?.[i], s.ret_21avg?.[i]]);
+        const isBenchmark = Boolean(s.is_benchmark);
         traces.push({{
           x:s.x, y:s.y, customdata:custom,
-          mode:'lines', type:'scatter', name:s.name, line:{{width:2.4}},
+          mode:'lines', type:'scatter', name:s.name, line:{{width:isBenchmark ? 2.2 : 2.4, dash: isBenchmark ? 'dash' : 'solid'}},
           hovertemplate:
             '%{{x|%d.%m.%Y}}<br><b>'+s.name+'</b><br>'+
             'Normalize: %{{y:.2f}}<br>'+

@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+from app.benchmarks import YahooBenchmarkClient
 from app.enrichment import analyze_price_series
 from app.fvt_client import FvtClient
 from app.scoring import z_to_100
@@ -136,6 +137,12 @@ def plot_fund_comparison(
             if not m.empty:
                 accel_markers.append((code, m["x"].iloc[-1], m["norm"].iloc[-1], e.accel_breakout_z))
 
+    benchmark_client = YahooBenchmarkClient(timeout=20)
+    benchmark_series = benchmark_client.fetch_all_norm(range_value=range_value)
+    for _, bdf in benchmark_series.items():
+        if bdf is not None and not bdf.empty:
+            series_rows.append(bdf.copy())
+
     if not series_rows:
         fig, ax = plt.subplots(figsize=(12, 4))
         ax.text(0.5, 0.5, "Karşılaştırma verisi bulunamadı", ha="center", va="center")
@@ -147,7 +154,11 @@ def plot_fund_comparison(
     fig, ax = plt.subplots(figsize=(14, 7))
     for d in series_rows:
         code = d["kod"].iloc[0]
-        ax.plot(d["x"], d["norm"], linewidth=2.1, label=code)
+        is_benchmark = str(code) in {"BIST 100", "Gram Altın"}
+        if is_benchmark:
+            ax.plot(d["x"], d["norm"], linewidth=2.2, linestyle="--", label=code)
+        else:
+            ax.plot(d["x"], d["norm"], linewidth=2.1, label=code)
 
     for code, x, y, z in accel_markers:
         ax.scatter([x], [y], s=80, marker="*", zorder=6)
