@@ -39,6 +39,21 @@ def safe_report_name(value: str) -> str:
     return name or "unknown_report"
 
 
+def format_report_folder_name(latest_report: str) -> str:
+    raw = (latest_report or "").strip()
+    # Expected source format from manifest: YYYYMMDD_HHMMSS
+    if len(raw) == 15 and raw[8] == "_" and raw[:8].isdigit() and raw[9:].isdigit():
+        y = raw[0:4]
+        m = raw[4:6]
+        d = raw[6:8]
+        hh = raw[9:11]
+        mm = raw[11:13]
+        ss = raw[13:15]
+        # Windows dosya sistemi ":" kabul etmedigi icin saat ayracinda "-" kullanilir.
+        return f"{y}_{m}_{d}_{hh}-{mm}-{ss}"
+    return safe_report_name(raw)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="GitHub Pages'teki son raporu yerel klasore indirir.")
     parser.add_argument(
@@ -67,11 +82,12 @@ def main() -> None:
     if not isinstance(files, list) or not files:
         raise RuntimeError("manifest.json icinde indirilecek dosya listesi bulunamadi.")
 
-    latest_name = safe_report_name(str(manifest.get("latest_report", "")))
+    latest_raw = str(manifest.get("latest_report", ""))
+    latest_name = format_report_folder_name(latest_raw)
     report_dir = root_dir / latest_name
     if report_dir.exists() and not args.force:
         print(f"Rapor zaten var, indirme atlandi: {report_dir}")
-        (root_dir / "latest_report.txt").write_text(str(latest_name), encoding="utf-8")
+        (root_dir / "latest_report.txt").write_text(str(latest_raw), encoding="utf-8")
         return
 
     if report_dir.exists() and args.force:
@@ -88,9 +104,9 @@ def main() -> None:
             continue
         download_file(args.base_url, rel, report_dir, args.timeout)
 
-    (root_dir / "latest_report.txt").write_text(str(latest_name), encoding="utf-8")
+    (root_dir / "latest_report.txt").write_text(str(latest_raw), encoding="utf-8")
     print(f"Indirme tamamlandi: {report_dir}")
-    print(f"Rapor: {latest_name}")
+    print(f"Rapor: {latest_raw}")
 
 
 if __name__ == "__main__":
