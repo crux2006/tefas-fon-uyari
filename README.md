@@ -149,6 +149,12 @@ Windows acilista otomatik indirme task'i:
 powershell -ExecutionPolicy Bypass -File scripts/install_startup_sync.ps1
 ```
 
+Davranis:
+- Bilgisayar acildiginda baslar.
+- Saat 11:00'dan once ise bekler.
+- 11:00'dan sonra bugunun raporu gelene kadar periyodik kontrol eder (varsayilan 2 dk).
+- Bugunun raporu gelince `Desktop/FonRaporlari/YYYYMMDD_HHMMSS/` altina kaydeder.
+
 Tek tik workflow tetikleme (masaustu kisayolu):
 
 ```powershell

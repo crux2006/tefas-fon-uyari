@@ -39,6 +39,8 @@ Repo > `Settings` > `Secrets and variables` > `Actions` > `New repository secret
 - Her rapor `Desktop/FonRaporlari/YYYYMMDD_HHMMSS/` klasorune iner.
 - Acilista otomatik calisma (startup):
   - `powershell -ExecutionPolicy Bypass -File scripts/install_startup_sync.ps1`
+  - VBS olusturur, hatasiz quote kacisi ile calisir.
+  - 11:00'dan once bekler, 11:00'dan sonra bugunun raporu gelene kadar periyodik kontrol eder.
 
 ### 1.7 Tek tik manuel tetikleme (Masaustu)
 - Kurulum:
